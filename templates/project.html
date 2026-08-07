@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Sessions · {{ project }}{% endblock %}
+{% block crumbs %}<span class="crumb current">Sessions</span>{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <div class="toolbar-left">
+    <input id="q" class="search" type="search" placeholder="Search sessions…" autocomplete="off">
+    <span class="muted">{{ total }} session{{ '' if total == 1 else 's' }}</span>
+  </div>
+  <div class="toolbar-right">
+    <a class="badge link" href="/p/{{ project }}/git">History</a>
+    <span class="select">
+      <select id="branch-select" aria-label="Branch filter">
+        <option value="">⑂ All branches</option>
+        {% if local_branches %}
+        <optgroup label="Local">
+          {% for b in local_branches %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+        </optgroup>
+        {% endif %}
+        {% if remote_branches %}
+        <optgroup label="Remote">
+          {% for b in remote_branches %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+        </optgroup>
+        {% endif %}
+      </select>
+    </span>
+  </div>
+</div>
+{% for g in groups %}
+<section class="date-group">
+  <div class="group-header">
+    <span>{{ g.label }}</span>
+    <span class="muted">{{ g.sessions|length }} session{{ '' if g.sessions|length == 1 else 's' }}</span>
+  </div>
+  {% for s in g.sessions %}
+  <a class="row session-row" href="/p/{{ project }}/{{ s.id }}"
+     data-branch="{{ s.branch or '' }}"
+     data-t="{{ (s.title ~ ' ' ~ (s.branch or '') ~ ' ' ~ (s.model or ''))|lower }}">
+    <div class="row-main">
+      <span class="row-title">{{ s.title }}</span>
+    </div>
+    <div class="row-side">
+      {% if s.has_subagents %}<span class="badge">subagents</span>{% endif %}
+      {% if s.has_tool_results %}<span class="badge">tool-results</span>{% endif %}
+      {% if s.branch %}<span class="chip branch mono">{{ s.branch }}</span>{% endif %}
+      {% if s.model %}<span class="chip model mono">{{ s.model }}</span>{% endif %}
+      <span class="muted mono size">{{ s.size }}</span>
+    </div>
+  </a>
+  {% endfor %}
+</section>
+{% endfor %}
+<script>
+const q = document.getElementById('q');
+const branchSel = document.getElementById('branch-select');
+function applyFilters() {
+  const v = q.value.toLowerCase();
+  const branch = branchSel.value;
+  document.querySelectorAll('.session-row').forEach(r => {
+    r.hidden = !r.dataset.t.includes(v) || (branch && r.dataset.branch !== branch);
+  });
+  document.querySelectorAll('.date-group').forEach(g => {
+    g.hidden = !g.querySelector('.session-row:not([hidden])');
+  });
+}
+q.addEventListener('input', applyFilters);
+branchSel.addEventListener('change', applyFilters);
+</script>
+{% endblock %}

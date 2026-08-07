@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Tool results · {{ session_id[:8] }}{% endblock %}
+{% block crumbs %}
+<a class="crumb" href="/">Projects</a><span class="crumb-sep">/</span>
+<a class="crumb" href="/p/{{ project }}">{{ project.split('-')[-1] }}</a><span class="crumb-sep">/</span>
+<a class="crumb mono" href="/p/{{ project }}/{{ session_id }}">{{ session_id[:8] }}</a><span class="crumb-sep">/</span>
+<span class="crumb current">tool-results</span>
+{% endblock %}
+{% block content %}
+<div class="list">
+{% for f in files %}
+  <a class="row" href="/p/{{ project }}/{{ session_id }}/tool-results/{{ f.name }}">
+    <div class="row-main"><span class="row-title mono">{{ f.name }}</span></div>
+    <div class="row-side"><span class="muted mono size">{{ f.size }}</span></div>
+  </a>
+{% else %}
+  <div class="muted empty">No tool results.</div>
+{% endfor %}
+</div>
+{% endblock %}

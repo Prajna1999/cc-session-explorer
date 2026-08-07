@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}History · {{ project }}{% endblock %}
+{% block crumbs %}
+<a class="crumb" href="/p/{{ project }}">Sessions</a><span class="crumb-sep">/</span>
+<span class="crumb current">History</span>
+{% endblock %}
+{% block content %}
+{% if commits %}
+<div class="list">
+{% for c in commits %}
+  <div class="row commit-row">
+    <div class="row-main">
+      <span class="row-title">{{ c.subject }}</span>
+      <span class="muted small">{{ c.author }} · {{ c.date }}</span>
+    </div>
+    <div class="row-side">
+      {% for r in c.refs %}<span class="chip branch mono">{{ r }}</span>{% endfor %}
+      <span class="muted mono">{{ c.hash }}</span>
+    </div>
+  </div>
+{% endfor %}
+</div>
+{% else %}
+<div class="card muted empty">No git history — {{ cwd or 'project directory' }} is missing or not a git repository.</div>
+{% endif %}
+{% endblock %}

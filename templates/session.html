@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}{{ meta.title or session_id }}{% endblock %}
+{% block crumbs %}
+<a class="crumb" href="/p/{{ project }}">Sessions</a><span class="crumb-sep">/</span>
+{% if is_subagent %}
+<a class="crumb" href="/p/{{ project }}/{{ session_id }}/subagents">subagents</a><span class="crumb-sep">/</span>
+{% endif %}
+<span class="crumb current">{{ (meta.title or session_id)[:64] }}</span>
+{% endblock %}
+{% block content %}
+<div class="session-header">
+  <h1>{{ meta.title or session_id }}</h1>
+  <div class="meta-line">
+    {% for m in meta.models %}<span class="chip model mono">{{ m }}</span>{% endfor %}
+    {% for b in meta.branches %}<span class="chip branch mono">{{ b }}</span>{% endfor %}
+    {% if meta.first %}<span class="muted">{{ meta.first.strftime('%-d %b %Y %H:%M') }}{% if meta.last and meta.last != meta.first %} → {{ meta.last.strftime('%H:%M') }}{% endif %}</span>{% endif %}
+    <span class="muted">· {{ meta.prompts }} prompts · {{ meta.tool_calls }} tool calls</span>
+    {% if meta.version %}<span class="muted mono">· v{{ meta.version }}</span>{% endif %}
+  </div>
+  <div class="meta-line">
+    <span class="muted mono small">{{ session_id }}{% if meta.cwd %} · {{ meta.cwd }}{% endif %}</span>
+  </div>
+  {% if has_subagents or has_tool_results %}
+  <div class="header-links">
+    {% if has_subagents %}<a class="badge link" href="/p/{{ project }}/{{ session_id }}/subagents">subagents →</a>{% endif %}
+    {% if has_tool_results %}<a class="badge link" href="/p/{{ project }}/{{ session_id }}/tool-results">tool-results →</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="session-layout">
+<div class="transcript">
+{% for e in entries %}
+  {% if e.kind == 'branch' %}
+    <div class="branch-divider" data-kind="system"><span class="chip branch mono">{{ e.text }}</span></div>
+  {% elif e.kind == 'user' %}
+    <div class="entry user {{ 'meta-msg' if e.meta }}" data-kind="user">
+      <div class="entry-head"><span class="who">User</span>{% if e.ts %}<span class="muted time">{{ e.ts.strftime('%H:%M') }}</span>{% endif %}</div>
+      <pre class="msg">{{ e.text }}</pre>
+    </div>
+  {% elif e.kind == 'assistant' %}
+    <div class="entry assistant" data-kind="assistant">
+      <div class="entry-head"><span class="who">Assistant</span>{% if e.model %}<span class="chip model mono">{{ e.model }}</span>{% endif %}{% if e.ts %}<span class="muted time">{{ e.ts.strftime('%H:%M') }}</span>{% endif %}</div>
+      <pre class="msg">{{ e.text }}</pre>
+    </div>
+  {% elif e.kind == 'thinking' %}
+    <details class="entry thinking" data-kind="thinking">
+      <summary>Thinking{% if e.ts %} · {{ e.ts.strftime('%H:%M') }}{% endif %}</summary>
+      <pre class="msg muted">{{ e.text }}</pre>
+    </details>
+  {% elif e.kind == 'tool' %}
+    <details class="entry tool" data-kind="tool" data-tool="{{ e.name }}">
+      <summary><span class="tool-name mono">{{ e.name }}</span>{% if e.arg %}<span class="muted mono tool-arg">{{ e.arg }}</span>{% endif %}{% if e.ts %}<span class="muted time">{{ e.ts.strftime('%H:%M') }}</span>{% endif %}</summary>
+      <div class="tool-body">
+        {% for p in e.params %}
+        <div class="param"><span class="param-key mono">{{ p.key }}</span><pre class="msg mono param-val">{{ p.value }}</pre></div>
+        {% endfor %}
+        {% if e.result %}
+        <div class="muted label">result</div>
+        <pre class="msg mono">{{ e.result }}</pre>
+        {% endif %}
+        {% if e.persisted %}
+        <a class="badge link" href="/p/{{ project }}/{{ session_id }}/tool-results/{{ e.persisted }}">full output: {{ e.persisted }} →</a>
+        {% endif %}
+      </div>
+    </details>
+  {% elif e.kind == 'system' %}
+    <div class="entry system muted" data-kind="system">{{ e.text }}{% if e.ts %} · {{ e.ts.strftime('%H:%M') }}{% endif %}</div>
+  {% endif %}
+{% endfor %}
+</div>
+
+<aside class="sidebar">
+  <div class="card side-card">
+    <div class="side-title">View</div>
+    <label class="check"><input type="checkbox" checked data-toggle="user"> Prompts <span class="muted count">{{ meta.prompts }}</span></label>
+    <label class="check"><input type="checkbox" checked data-toggle="assistant"> Responses <span class="muted count">{{ meta.responses }}</span></label>
+    <label class="check"><input type="checkbox" checked data-toggle="thinking"> Thinking <span class="muted count">{{ meta.thinking }}</span></label>
+    <label class="check"><input type="checkbox" checked data-toggle="tool" id="tool-master"> Tool calls <span class="muted count">{{ meta.tool_calls }}</span></label>
+    <div class="sub-checks">
+      {% for name, n in meta.tool_counts.items() %}
+      <label class="check"><input type="checkbox" checked data-toggle="tool:{{ name }}" class="tool-sub"> {{ name }} <span class="muted count">{{ n }}</span></label>
+      {% endfor %}
+    </div>
+    <label class="check"><input type="checkbox" checked data-toggle="system"> System <span class="muted count"></span></label>
+  </div>
+</aside>
+</div>
+
+<script>
+const toggles = document.querySelectorAll('[data-toggle]');
+function applyView() {
+  const off = new Set([...toggles].filter(c => !c.checked).map(c => c.dataset.toggle));
+  document.querySelectorAll('.transcript [data-kind]').forEach(el => {
+    el.hidden = off.has(el.dataset.kind) || (el.dataset.tool && off.has('tool:' + el.dataset.tool));
+  });
+}
+toggles.forEach(c => c.addEventListener('change', e => {
+  if (e.target.id === 'tool-master') {
+    document.querySelectorAll('.tool-sub').forEach(s => s.checked = e.target.checked);
+  }
+  applyView();
+}));
+</script>
+{% endblock %}

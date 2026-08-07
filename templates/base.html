@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Sessions{% endblock %}</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="logo" href="/">◆</a>
+  <span class="select proj-switch">
+    <select onchange="location.href='/p/' + this.value" aria-label="Project">
+      {% for p in projects %}
+      <option value="{{ p.name }}" {{ 'selected' if p.name == current_project }}>{{ p.label }}</option>
+      {% endfor %}
+    </select>
+  </span>
+  <nav class="crumbs">
+    <span class="crumb-sep">/</span>
+    {% block crumbs %}<a class="crumb current" href="/p/{{ current_project }}">Sessions</a>{% endblock %}
+  </nav>
+</header>
+<main class="container">
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>
