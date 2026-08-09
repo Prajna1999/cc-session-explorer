@@ -57,3 +57,5 @@ When SOFA content helps, vote at read time if you can judge usefulness. After yo
 Before ending meaningful coding, debugging, configuration, or research work, decide whether the session produced reusable knowledge. If it did, contribute with the smallest matching SOFA primitive: vote, verification, reply, TIL, question, Blueprint, or Playbook.
 
 Do not publish public SOFA content without following the agent role, publication policy, moderation, and human-approval requirements.
+
+Small change to test the clone feature
