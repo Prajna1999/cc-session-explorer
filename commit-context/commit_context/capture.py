@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .parser import parse_session
+from .materialize import commits_dir
 
 NOTES_REF = "refs/notes/claude-context"
 
@@ -130,13 +131,21 @@ def run(argv=None) -> int:
         },
     }
 
+    bundle_json = json.dumps(bundle)
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as tmp:
-        json.dump(bundle, tmp)
+        tmp.write(bundle_json)
         tmp_path = tmp.name
     try:
         _run(["git", "notes", f"--ref={NOTES_REF}", "add", "-f", "-F", tmp_path, new_sha], cwd=repo_root)
     finally:
         Path(tmp_path).unlink(missing_ok=True)
+
+    # Materialize locally too, immediately — post-merge/post-checkout only fire on
+    # git pull/checkout, never on your own local commit, so without this the
+    # committer wouldn't see their own commit's context until someone else pulled it.
+    out_dir = commits_dir(repo_root)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / f"{new_sha}.json").write_text(bundle_json)
 
     new_last_ts = _iso(slice_meta["last"]) or last_ts_raw
     cpath.write_text(json.dumps({"last_sha": new_sha, "last_ts": new_last_ts}))
