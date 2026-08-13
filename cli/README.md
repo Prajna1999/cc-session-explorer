@@ -5,7 +5,7 @@ commit itself, via `git notes`, so it travels with the repo on push/pull.
 
 Install once per machine:
 
-    uv tool install --from ./commit-context commit-context
+    uv tool install --from ./cli commit-context
 
 Install once per repo clone:
 

@@ -27,7 +27,7 @@ Frontend (`cd frontend`):
 
 Run both the backend and frontend dev servers together for local development. No tests are configured for either side.
 
-Cloud backend (`cloud/`, its own uv project — `cd cloud` first):
+Cloud backend (`backend/`, its own uv project — `cd backend` first):
 
 - Install deps: `uv sync`
 - Run the API: `uv run uvicorn cc_cloud.main:app --reload --port 8000` (SQLite dev DB is created automatically on startup; Postgres is Alembic-managed)
@@ -38,7 +38,7 @@ Cloud backend (`cloud/`, its own uv project — `cd cloud` first):
 
 ## Commit Context (augmenting git)
 
-`commit-context/` is a separate, dependency-free Python package (its own `pyproject.toml`, no fastapi) that attaches the Claude Code agent conversation behind a commit to that commit itself, via `git notes` on `refs/notes/claude-context`, so it travels with the repo on push/pull. It's a portable CLI (`cc-commit-context`), not repo-specific — same idea as installing `pre-commit`.
+`cli/` is a separate, dependency-free Python package (its own `pyproject.toml`, no fastapi) that attaches the Claude Code agent conversation behind a commit to that commit itself, via `git notes` on `refs/notes/claude-context`, so it travels with the repo on push/pull. It's a portable CLI (`cc-commit-context`), not repo-specific — same idea as installing `pre-commit`.
 
 - `commit_context/parser.py` is the single source of truth for JSONL transcript parsing — `main.py` imports `parse_session` and friends from it (via the `commit-context` path dependency in the root `pyproject.toml`) rather than defining its own copy.
 - `commit_context/capture.py` runs as a Claude Code `PostToolUse` hook (see `.claude/settings.json`) after every Bash call; it no-ops unless the command contained `git commit`, then slices the current session's transcript since the last commit it captured, attaches it as a note, and also writes it straight to `~/.claude/projects/<project-slug>/commits/<sha>.json` itself — a native `post-commit` git hook can't do this materialization, because it fires synchronously inside `git commit` itself, before the Bash tool call even returns to Claude Code, let alone before `PostToolUse`/`capture` has run and attached the note.
@@ -48,7 +48,7 @@ Cloud backend (`cloud/`, its own uv project — `cd cloud` first):
 Setup:
 
 ```
-uv tool install --from ./commit-context commit-context   # once per machine
+uv tool install --from ./cli commit-context   # once per machine
 cc-commit-context install                                 # once per clone
 ```
 
@@ -56,7 +56,7 @@ After that, capture is automatic **only for commits made via `git commit` as a B
 
 ## Cloud (hosted, multi-user)
 
-`cloud/` is the hosted version of the explorer: a separate uv project (`cc-cloud`) with
+`backend/` is the hosted version of the explorer: a separate uv project (`cc-cloud`) with
 its own FastAPI app (`cc_cloud/main.py`), SQLAlchemy 2.0 models (`cc_cloud/models.py`),
 Alembic migrations (`alembic/`), and a sync CLI (`cc_cloud/sync.py`). Design rationale
 and the full data model live in `docs/system-design.md`. Key facts:
@@ -68,7 +68,7 @@ and the full data model live in `docs/system-design.md`. Key facts:
   `frontend/.env.local` `API_BASE_URL` to the cloud API.
 - Ingest is idempotent: sessions key on `(project_id, external_id)`, commits on
   `(project_id, sha)`, children are delete-and-reinserted per session — re-syncing is
-  an update, not a duplicate (proven by `cloud/tests/smoke.py`).
+  an update, not a duplicate (proven by `backend/tests/smoke.py`).
 - The CLI reuses `commit_context/parser.py` for transcript parsing — it is the single
   source of truth; `cc_cloud` never re-implements it. Commit bundles keep the
   `capture.py` note shape.
@@ -76,7 +76,7 @@ and the full data model live in `docs/system-design.md`. Key facts:
   only. `BigIntPk` is `BigInteger().with_variant(Integer, "sqlite")` because SQLite
   only autoincrements INTEGER PKs.
 - Git-native ingest (M1): `cc_cloud/worker.py` keeps bare mirror clones under
-  `CC_CLOUD_REPOS_DIR` (default `cloud/data/repos`, gitignored), reads commit context
+  `CC_CLOUD_REPOS_DIR` (default `backend/data/repos`, gitignored), reads commit context
   from `refs/notes/claude-context` (zero agent-side software), and is driven by
   `POST /api/webhooks/github` (HMAC-SHA256) or `cc-cloud-worker backfill`.
   `repo_identity()` normalizes ssh/https/local URLs to `(host, path)` for matching.

@@ -13,5 +13,5 @@ wheels/
 *.db
 *.db-shm
 *.db-wal
-cloud/.env
-cloud/data/
+backend/.env
+backend/data/

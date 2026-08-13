@@ -10,8 +10,8 @@ travels with the repo.
 |---|---|
 | `main.py` | Local FastAPI JSON API over `~/.claude/projects` (per-machine) |
 | `frontend/` | Next.js (App Router) + shadcn UI, server-side fetches via `API_BASE_URL` |
-| `commit-context/` | Dependency-free package: attach agent context to commits via `refs/notes/claude-context` (`cc-commit-context` CLI) |
-| `cloud/` | **Hosted, multi-user version** — SQLAlchemy models, Alembic migrations, cloud FastAPI API, `cc-cloud` sync CLI (see `docs/system-design.md`) |
+| `cli/` | Dependency-free package: attach agent context to commits via `refs/notes/claude-context` (`cc-commit-context` CLI) |
+| `backend/` | **Hosted, multi-user version** — SQLAlchemy models, Alembic migrations, cloud FastAPI API, `cc-cloud` sync CLI (see `docs/system-design.md`) |
 | `docs/system-design.md` | System design for the cloud, multi-user product |
 
 ## Local dev
@@ -24,7 +24,7 @@ cd frontend && npm run dev     # UI on :3000
 Commit context setup (once per machine/clone):
 
 ```sh
-uv tool install --from ./commit-context commit-context
+uv tool install --from ./cli commit-context
 cc-commit-context install
 ```
 
@@ -40,7 +40,7 @@ member's machine and serves it through the same frontend, now team-aware. Two pa
    full transcripts from a dev machine (M2 — done).
 
 ```sh
-cd cloud && uv sync
+cd backend && uv sync
 uv run uvicorn cc_cloud.main:app --reload --port 8000   # SQLite dev DB, auto-created
 uv run alembic upgrade head                             # prod: Postgres via CC_CLOUD_DATABASE_URL
 uv run python tests/smoke.py                            # in-process API checks
@@ -48,4 +48,4 @@ uv run python tests/e2e_cli.py                          # live server + real CLI
 uv run python tests/worker_test.py                      # git webhook ingest checks
 ```
 
-See `cloud/README.md` for the CLI and `docs/system-design.md` for the full design.
+See `backend/README.md` for the CLI and `docs/system-design.md` for the full design.

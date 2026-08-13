@@ -13,7 +13,7 @@ context (session logs and per-commit context) for shared git repos.
   tool-results, git history, per-commit context.
 - A Next.js (App Router) + shadcn frontend renders the explorer; server components call
   the API via `API_BASE_URL` (defaults to `http://localhost:8000`).
-- `commit-context/` attaches the agent conversation behind each `git commit` to the
+- `cli/` attaches the agent conversation behind each `git commit` to the
   commit itself via `refs/notes/claude-context`, so context travels with the repo on
   push/pull. `capture.py` fires as a Claude Code `PostToolUse` hook after in-session
   `git commit` Bash calls; `materialize.py` writes notes out to
@@ -94,15 +94,15 @@ requires an agent-side uploader.
 
 ### Components
 
-1. **Cloud API** (`cloud/cc_cloud/main.py`) — FastAPI app. Auth (JWT + API tokens),
+1. **Cloud API** (`backend/cc_backend/main.py`) — FastAPI app. Auth (JWT + API tokens),
    read endpoints (same contract as the local API), ingest endpoints, cursor endpoints.
-2. **SQL store** (`cloud/cc_cloud/models.py`) — SQLAlchemy 2.0 models, Alembic
+2. **SQL store** (`backend/cc_backend/models.py`) — SQLAlchemy 2.0 models, Alembic
    migrations. Postgres in production, SQLite for local dev/tests.
 3. **Ingest worker** — subscribes to git-host push webhooks; clones/fetches the repo,
    fetches `refs/notes/claude-context`, materializes note bundles (reuses
    `commit_context.materialize` logic) and upserts commits + contexts via the API or
    directly against the DB.
-4. **Sync CLI** (`cloud/cc_cloud/sync.py`) — opt-in uploader for full session
+4. **Sync CLI** (`backend/cc_backend/sync.py`) — opt-in uploader for full session
    transcripts from a dev machine. Reuses `commit_context.parser.parse_session`.
 5. **Frontend** — the existing Next.js app, pointed at the cloud API, with an auth
    layer and a team/project switcher (see §9).
@@ -118,7 +118,7 @@ requires an agent-side uploader.
    `commits/<sha>.json` locally.
 2. `git push` uploads the notes ref (pre-push hook, already shipped).
 3. Git host fires a push webhook → `POST /api/webhooks/github` (HMAC-SHA256 verified
-   with `CC_CLOUD_WEBHOOK_SECRET`) → the worker (`cloud/cc_cloud/worker.py`) fetches
+   with `CC_CLOUD_WEBHOOK_SECRET`) → the worker (`backend/cc_backend/worker.py`) fetches
    the project's mirror clone, reads each new commit's note bundle + git metadata,
    and upserts `commits` + `commit_contexts`. Repos are matched by normalized
    `(host, path)` identity, so an https webhook URL finds a project registered with
@@ -127,7 +127,7 @@ requires an agent-side uploader.
    full `rev-list --branches --tags` diff against known shas and ingests everything
    new.
 
-**Implemented and verified (M1):** `cloud/tests/worker_test.py` (19 checks: identity
+**Implemented and verified (M1):** `backend/tests/worker_test.py` (19 checks: identity
 normalization, note ingestion from a mirror clone, idempotent re-sync, webhook
 signature accept/reject, incremental push path). A live backfill of this repo ingested
 11 commits and recovered all 3 notes from `refs/notes/claude-context`.
@@ -158,7 +158,7 @@ isn't syncing. Same ingest path as B.
 
 ## 5. Data model (SQL)
 
-Full DDL lives in `cloud/alembic/versions/` (generated from `cloud/cc_cloud/models.py`).
+Full DDL lives in `backend/alembic/versions/` (generated from `backend/cc_backend/models.py`).
 Overview:
 
 ```
@@ -315,8 +315,8 @@ shown), secret-redaction notice in the UI.
 
 | Milestone | Scope |
 |---|---|
-| M0 | `cloud/` package: models + Alembic migration + API skeleton (auth, read endpoints) — **this doc's companion code** |
-| M1 | **Done** — `POST /api/webhooks/github` + `cc_cloud/worker.py` (mirror clone, notes fetch, upsert) + `cc-cloud-worker backfill` cron; zero-install context for the whole team |
+| M0 | `backend/` package: models + Alembic migration + API skeleton (auth, read endpoints) — **this doc's companion code** |
+| M1 | **Done** — `POST /api/webhooks/github` + `cc_backend/worker.py` (mirror clone, notes fetch, upsert) + `cc-cloud-worker backfill` cron; zero-install context for the whole team |
 | M2 | `cc-cloud sync` CLI + full session ingest + cursor protocol |
 | M3 | **Done** — frontend auth (login/register + httpOnly cookie), team-aware switcher, author display, members page, sign out |
 | M4 | Hardening: secret redaction, OAuth, pagination for large projects, manual upload |
@@ -331,4 +331,4 @@ shown), secret-redaction notice in the UI.
 
 ---
 
-Companion code: `cloud/` (SQLAlchemy models, Alembic migration, cloud API, sync CLI).
+Companion code: `backend/` (SQLAlchemy models, Alembic migration, cloud API, sync CLI).

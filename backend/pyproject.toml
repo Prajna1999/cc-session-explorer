@@ -22,7 +22,7 @@ cc-cloud = "cc_cloud.sync:main"
 cc-cloud-worker = "cc_cloud.worker:main"
 
 [tool.uv.sources]
-commit-context = { path = "../commit-context", editable = true }
+commit-context = { path = "../cli", editable = true }
 
 [build-system]
 requires = ["hatchling"]

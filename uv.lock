@@ -49,7 +49,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "commit-context", editable = "commit-context" },
+    { name = "commit-context", editable = "cli" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.141.1" },
 ]
 
@@ -86,7 +86,7 @@ wheels = [
 [[package]]
 name = "commit-context"
 version = "0.1.0"
-source = { editable = "commit-context" }
+source = { editable = "cli" }
 
 [[package]]
 name = "detect-installer"

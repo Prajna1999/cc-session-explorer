@@ -1,6 +1,6 @@
 """End-to-end smoke test for the cloud API.
 
-Run from ``cloud/``::
+Run from ``backend/``::
 
     uv run python tests/smoke.py
 

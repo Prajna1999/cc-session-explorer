@@ -1,6 +1,6 @@
 """Full end-to-end test: live uvicorn server + the real ``cc-cloud`` sync CLI.
 
-Run from ``cloud/``::
+Run from ``backend/``::
 
     uv run python tests/e2e_cli.py
 

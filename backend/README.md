@@ -19,7 +19,7 @@ system design. This package contains:
 ## Development
 
 ```sh
-uv sync                          # install deps (uses ../commit-context for parsing)
+uv sync                          # install deps (uses ../cli for parsing)
 uv run alembic upgrade head      # create the schema (SQLite by default)
 uv run uvicorn cc_cloud.main:app --reload --port 8000
 ```
@@ -39,7 +39,7 @@ Point a GitHub webhook at `POST /api/webhooks/github` (set `CC_CLOUD_WEBHOOK_SEC
 and configure the same secret on the webhook). Every push is fetched and new commits
 plus their `refs/notes/claude-context` bundles are ingested automatically. Missed
 pushes are covered by `cc-cloud-worker backfill` (cron). The worker keeps bare mirror
-clones in `CC_CLOUD_REPOS_DIR` (default `cloud/data/repos`, gitignored) — the server
+clones in `CC_CLOUD_REPOS_DIR` (default `backend/data/repos`, gitignored) — the server
 needs read access to each project's remote.
 
 ## Sync CLI

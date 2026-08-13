@@ -1,6 +1,6 @@
 """Tests for the git-native ingest worker (M1).
 
-Run from ``cloud/``::
+Run from ``backend/``::
 
     uv run python tests/worker_test.py
 

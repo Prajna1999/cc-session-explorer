@@ -67,7 +67,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "alembic", specifier = ">=1.13" },
-    { name = "commit-context", editable = "../commit-context" },
+    { name = "commit-context", editable = "../cli" },
     { name = "email-validator", specifier = ">=2.1" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "httpx", specifier = ">=0.27" },
@@ -111,7 +111,7 @@ wheels = [
 [[package]]
 name = "commit-context"
 version = "0.1.0"
-source = { editable = "../commit-context" }
+source = { editable = "../cli" }
 
 [[package]]
 name = "dnspython"

@@ -1,7 +1,7 @@
 """Git-native ingest worker (M1).
 
 The commit context already travels with the repo on ``refs/notes/claude-context``
-(see commit-context/), so the cloud needs **zero agent-side software** to show
+(see cli/), so the cloud needs **zero agent-side software** to show
 teammates' context: the worker keeps a bare mirror clone of each project, fetches
 new refs + the notes ref, reads each new commit's note bundle (if any) and commit
 metadata, and upserts them through ``ingest.ingest_commits``.
