@@ -3,9 +3,10 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { Chip } from "@/components/chip"
 import type { Entry, SessionMeta } from "@/lib/sessions"
 
-const CARD = "rounded-xl bg-card p-3.5 shadow-sm ring-1 ring-foreground/10"
+const CARD = "rounded-lg border border-border bg-card p-3.5 shadow-xs"
 
 function fmtTime(ts: Date | null): string {
   if (!ts) return ""
@@ -20,6 +21,22 @@ function Msg({ children, className }: { children: string; className?: string }) 
   )
 }
 
+function Summary({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <summary
+      className={cn(
+        "flex cursor-pointer list-none items-center gap-2 transition-colors duration-150 ease-out focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden",
+        className
+      )}
+    >
+      {children}
+    </summary>
+  )
+}
+
+const CARET_CLOSED = "before:content-['▸']"
+const CARET_OPEN = "open:mb-2 open:before:content-['▾']"
+
 export function Transcript({
   project,
   sessionId,
@@ -27,7 +44,7 @@ export function Transcript({
   meta,
 }: {
   project: string
-  sessionId: string
+  sessionId: string | null
   entries: Entry[]
   meta: SessionMeta
 }) {
@@ -73,7 +90,7 @@ export function Transcript({
           if (e.kind === "branch") {
             return (
               <div key={i} className="flex items-center gap-2.5 py-1 before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border">
-                <span className="whitespace-nowrap rounded-md bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground">{e.text}</span>
+                <span className="whitespace-nowrap rounded-md border border-border bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground">{e.text}</span>
               </div>
             )
           }
@@ -81,8 +98,8 @@ export function Transcript({
             return (
               <div key={i} className={cn(CARD, e.meta && "opacity-65")}>
                 <div className="mb-1.5 flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-primary">User</span>
-                  {e.ts && <span className="ml-auto text-xs text-muted-foreground">{fmtTime(e.ts)}</span>}
+                  <span className="text-xs font-semibold text-foreground">User</span>
+                  {e.ts && <span className="ml-auto font-mono text-xs tabular-nums text-muted-foreground">{fmtTime(e.ts)}</span>}
                 </div>
                 <Msg>{e.text}</Msg>
               </div>
@@ -91,10 +108,10 @@ export function Transcript({
           if (e.kind === "assistant") {
             return (
               <div key={i} className={CARD}>
-                <div className="mb-1.5 flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Assistant</span>
-                  {e.model && <span className="whitespace-nowrap rounded-md bg-orange-100 px-2 py-0.5 font-mono text-xs text-orange-700 dark:bg-orange-950 dark:text-orange-400">{e.model}</span>}
-                  {e.ts && <span className="ml-auto text-xs text-muted-foreground">{fmtTime(e.ts)}</span>}
+                <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-muted-foreground">Assistant</span>
+                  {e.model && <Chip variant="model">{e.model}</Chip>}
+                  {e.ts && <span className="ml-auto font-mono text-xs tabular-nums text-muted-foreground">{fmtTime(e.ts)}</span>}
                 </div>
                 <Msg>{e.text}</Msg>
               </div>
@@ -102,39 +119,39 @@ export function Transcript({
           }
           if (e.kind === "thinking") {
             return (
-              <details key={i} className={cn(CARD, "[&_summary::-webkit-details-marker]:hidden")}>
-                <summary className="flex cursor-pointer list-none items-center gap-2 text-sm text-muted-foreground transition-colors duration-200 ease-out before:content-['▸'] hover:text-foreground open:mb-2 open:before:content-['▾']">
+              <details key={i} className={CARD}>
+                <Summary className={cn("text-sm text-muted-foreground hover:text-foreground", CARET_CLOSED, CARET_OPEN)}>
                   Thinking{e.ts && ` · ${fmtTime(e.ts)}`}
-                </summary>
+                </Summary>
                 <Msg className="text-muted-foreground">{e.text}</Msg>
               </details>
             )
           }
           if (e.kind === "tool") {
             return (
-              <details key={i} className={cn(CARD, "[&_summary::-webkit-details-marker]:hidden")}>
-                <summary className="flex cursor-pointer list-none items-center gap-2 transition-colors duration-200 ease-out before:content-['▸'] open:mb-2 open:before:content-['▾']">
+              <details key={i} className={CARD}>
+                <Summary className={cn(CARET_CLOSED, CARET_OPEN)}>
                   <span className="font-mono text-sm font-semibold">{e.name}</span>
                   {e.arg && <span className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-muted-foreground">{e.arg}</span>}
-                  {e.ts && <span className="ml-auto text-xs text-muted-foreground">{fmtTime(e.ts)}</span>}
-                </summary>
+                  {e.ts && <span className="ml-auto font-mono text-xs tabular-nums text-muted-foreground">{fmtTime(e.ts)}</span>}
+                </Summary>
                 <div className="flex flex-col gap-1.5">
                   {e.params.map((p) => (
                     <div key={p.key} className="grid grid-cols-[110px_1fr] items-start gap-2.5">
                       <span className="pt-2.5 font-mono text-xs text-muted-foreground">{p.key}</span>
-                      <Msg className="max-h-40 rounded-md bg-muted p-2.5 font-mono text-xs">{p.value}</Msg>
+                      <Msg className="max-h-40 rounded-md border border-border bg-muted p-2.5 font-mono text-xs">{p.value}</Msg>
                     </div>
                   ))}
                   {e.result && (
                     <>
-                      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">result</div>
-                      <Msg className="max-h-80 rounded-md bg-muted p-2.5 font-mono text-xs">{e.result}</Msg>
+                      <div className="text-xs font-medium text-muted-foreground">result</div>
+                      <Msg className="max-h-80 rounded-md border border-border bg-muted p-2.5 font-mono text-xs">{e.result}</Msg>
                     </>
                   )}
-                  {e.persisted && (
+                  {e.persisted && sessionId && (
                     <Link
                       href={`/p/${project}/${sessionId}/tool-results/${e.persisted}`}
-                      className="inline-block w-fit rounded-md border px-2 py-0.5 text-xs text-muted-foreground no-underline transition-colors duration-200 ease-out hover:border-muted-foreground hover:text-foreground"
+                      className="inline-block w-fit rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground no-underline transition-colors duration-150 ease-out hover:border-input hover:text-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
                     >
                       full output: {e.persisted} →
                     </Link>
@@ -153,9 +170,9 @@ export function Transcript({
         })}
       </div>
 
-      <aside className="sticky top-[72px]">
+      <aside className="sticky top-[68px]">
         <div className={CARD}>
-          <div className="mb-2 text-sm font-semibold">View</div>
+          <div className="mb-2 text-sm font-semibold tracking-tight">View</div>
           <ViewCheck label="Prompts" count={meta.prompts} checked={!off.has("user")} onChange={(c) => toggle("user", c)} />
           <ViewCheck label="Responses" count={meta.responses} checked={!off.has("assistant")} onChange={(c) => toggle("assistant", c)} />
           <ViewCheck label="Thinking" count={meta.thinking} checked={!off.has("thinking")} onChange={(c) => toggle("thinking", c)} />
@@ -184,15 +201,15 @@ function ViewCheck({
   onChange: (checked: boolean) => void
 }) {
   return (
-    <label className="flex cursor-pointer select-none items-center gap-2 rounded-md px-1 py-1 text-sm transition-colors duration-200 ease-out hover:bg-accent/40">
+    <label className="flex cursor-pointer select-none items-center gap-2 rounded-md px-1 py-1 text-sm transition-colors duration-150 ease-out hover:bg-accent/60">
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="accent-primary transition-transform duration-150 ease-out active:scale-90"
+        className="size-3.5 accent-signal transition-transform duration-100 ease-out active:scale-90"
       />
-      {label}
-      {count !== undefined && <span className="ml-auto text-xs text-muted-foreground">{count}</span>}
+      <span className="font-mono text-xs">{label}</span>
+      {count !== undefined && <span className="ml-auto font-mono text-xs tabular-nums text-muted-foreground">{count}</span>}
     </label>
   )
 }

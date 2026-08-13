@@ -2,14 +2,14 @@ import { notFound } from "next/navigation"
 import { AppShell, Crumb, CrumbSep } from "@/components/app-shell"
 import { Chip } from "@/components/chip"
 import { Transcript } from "@/components/transcript"
-import { listProjects, getCommitContext, NotFoundError } from "@/lib/sessions"
+import { listProjects, getCommitContext, NotFoundError, withAuth } from "@/lib/sessions"
 
 export default async function Page({ params }: { params: Promise<{ project: string; sha: string }> }) {
   const { project, sha } = await params
-  const projects = await listProjects()
+  const projects = await withAuth(() => listProjects())
   let commit: Awaited<ReturnType<typeof getCommitContext>>
   try {
-    commit = await getCommitContext(project, sha)
+    commit = await withAuth(() => getCommitContext(project, sha))
   } catch (e) {
     if (e instanceof NotFoundError) notFound()
     throw e
@@ -56,7 +56,8 @@ export default async function Page({ params }: { params: Promise<{ project: stri
         </div>
         <div className="mb-1 flex flex-wrap items-center gap-2 text-[13px]">
           <span className="font-mono text-xs text-muted-foreground">
-            {sha} · from session {sessionId}
+            {sha}
+            {sessionId ? ` · from session ${sessionId}` : ""}
           </span>
         </div>
       </div>

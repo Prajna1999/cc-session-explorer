@@ -3,14 +3,14 @@ import { AppShell, Crumb, CrumbSep } from "@/components/app-shell"
 import { Chip } from "@/components/chip"
 import { Badge } from "@/components/ui/badge"
 import { ListContainer, Row, RowTitle, Empty } from "@/components/row-list"
-import { listProjects, gitHistory, NotFoundError } from "@/lib/sessions"
+import { listProjects, gitHistory, NotFoundError, withAuth } from "@/lib/sessions"
 
 export default async function Page({ params }: { params: Promise<{ project: string }> }) {
   const { project } = await params
-  const projects = await listProjects()
+  const projects = await withAuth(() => listProjects())
   let cwd: string | null, commits: Awaited<ReturnType<typeof gitHistory>>["commits"]
   try {
-    ;({ cwd, commits } = await gitHistory(project))
+    ;({ cwd, commits } = await withAuth(() => gitHistory(project)))
   } catch (e) {
     if (e instanceof NotFoundError) notFound()
     throw e
@@ -43,7 +43,11 @@ export default async function Page({ params }: { params: Promise<{ project: stri
               }
               side={
                 <>
-                  {c.hasContext && <Badge variant="secondary">context</Badge>}
+                  {c.hasContext && (
+                    <Badge variant="secondary" className="border-signal/30 bg-signal/10 text-signal">
+                      context
+                    </Badge>
+                  )}
                   {c.refs.map((r) => (
                     <Chip key={r} variant="branch">
                       {r}

@@ -21,8 +21,20 @@ Frontend (`cd frontend`):
 - Run the dev server: `npm run dev`
 - Typecheck: `npm run typecheck`
 - Lint: `npm run lint`
+- Design system: `design.md` at the repo root is the locked system (Cobalt workbench —
+  Geist + Geist Mono, one signal accent, motion-cut). Tokens live in `app/globals.css`.
+  Redesign work must read `design.md` first (Hallmark discipline).
 
 Run both the backend and frontend dev servers together for local development. No tests are configured for either side.
+
+Cloud backend (`cloud/`, its own uv project — `cd cloud` first):
+
+- Install deps: `uv sync`
+- Run the API: `uv run uvicorn cc_cloud.main:app --reload --port 8000` (SQLite dev DB is created automatically on startup; Postgres is Alembic-managed)
+- Migrations: `uv run alembic upgrade head` / `alembic revision --autogenerate -m "…"` (set `CC_CLOUD_DATABASE_URL` to target the real DB)
+- Tests: `uv run python tests/smoke.py` (43 in-process API checks), `uv run python tests/e2e_cli.py` (live server + real `cc-cloud sync` CLI) and `uv run python tests/worker_test.py` (19 git-webhook ingest checks)
+- Sync CLI: `uv run cc-cloud login --url … --token …`, `uv run cc-cloud me`, `uv run cc-cloud projects add …`, `uv run cc-cloud sync --project <repo> --sessions --commits`
+- Git-native ingest: `POST /api/webhooks/github` (set `CC_CLOUD_WEBHOOK_SECRET`), worker logic in `cc_cloud/worker.py`, cron backfill via `uv run cc-cloud-worker backfill`
 
 ## Commit Context (augmenting git)
 
@@ -41,6 +53,33 @@ cc-commit-context install                                 # once per clone
 ```
 
 After that, capture is automatic **only for commits made via `git commit` as a Bash tool call inside a Claude Code session** — the capture hook is a Claude Code `PostToolUse` hook, so it never fires for a commit run from a plain terminal, a different tool, or CI, even if a Claude Code session happens to be open elsewhere on the same repo. Those commits simply get no attached context, which is correct: there's no agent conversation behind them to capture. `git pull`/`git checkout` materialize whatever context arrived with new commits regardless of how they were made, on every machine, with no manual step per commit.
+
+## Cloud (hosted, multi-user)
+
+`cloud/` is the hosted version of the explorer: a separate uv project (`cc-cloud`) with
+its own FastAPI app (`cc_cloud/main.py`), SQLAlchemy 2.0 models (`cc_cloud/models.py`),
+Alembic migrations (`alembic/`), and a sync CLI (`cc_cloud/sync.py`). Design rationale
+and the full data model live in `docs/system-design.md`. Key facts:
+
+- Read endpoints mirror the local API's response shapes and the frontend now talks to
+  the cloud directly: `app/login` + `app/api/auth/*` route handlers set an httpOnly
+  `cc_cloud_token` cookie, `lib/sessions.ts` attaches it as Bearer and `withAuth()`
+  redirects to `/login` on 401 (local API passes through untouched). Set
+  `frontend/.env.local` `API_BASE_URL` to the cloud API.
+- Ingest is idempotent: sessions key on `(project_id, external_id)`, commits on
+  `(project_id, sha)`, children are delete-and-reinserted per session — re-syncing is
+  an update, not a duplicate (proven by `cloud/tests/smoke.py`).
+- The CLI reuses `commit_context/parser.py` for transcript parsing — it is the single
+  source of truth; `cc_cloud` never re-implements it. Commit bundles keep the
+  `capture.py` note shape.
+- SQLite (dev) self-creates tables on startup; Postgres (prod) is Alembic-managed
+  only. `BigIntPk` is `BigInteger().with_variant(Integer, "sqlite")` because SQLite
+  only autoincrements INTEGER PKs.
+- Git-native ingest (M1): `cc_cloud/worker.py` keeps bare mirror clones under
+  `CC_CLOUD_REPOS_DIR` (default `cloud/data/repos`, gitignored), reads commit context
+  from `refs/notes/claude-context` (zero agent-side software), and is driven by
+  `POST /api/webhooks/github` (HMAC-SHA256) or `cc-cloud-worker backfill`.
+  `repo_identity()` normalizes ssh/https/local URLs to `(host, path)` for matching.
 
 ## SOFA Usage
 

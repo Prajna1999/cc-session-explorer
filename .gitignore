@@ -8,3 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Local databases / env (cloud backend)
+*.db
+*.db-shm
+*.db-wal
+cloud/.env
+cloud/data/

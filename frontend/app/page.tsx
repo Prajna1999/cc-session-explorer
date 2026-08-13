@@ -1,9 +1,9 @@
 import { AppShell, Crumb } from "@/components/app-shell"
 import { ListContainer, Row, RowTitle, Empty } from "@/components/row-list"
-import { listProjects } from "@/lib/sessions"
+import { listProjects, withAuth } from "@/lib/sessions"
 
 export default async function Page() {
-  const projects = await listProjects()
+  const projects = await withAuth(() => listProjects())
   return (
     <AppShell projects={projects} currentProject={projects[0]?.name ?? null} breadcrumbs={<Crumb current>Projects</Crumb>}>
       <ListContainer>
@@ -15,7 +15,10 @@ export default async function Page() {
               main={
                 <>
                   <RowTitle>{p.label}</RowTitle>
-                  <span className="font-mono text-xs text-muted-foreground">{p.cwd}</span>
+                  <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                    {p.teamName && <span>{p.teamName}</span>}
+                    <span className="font-mono">{p.cwd}</span>
+                  </span>
                 </>
               }
               side={
@@ -24,7 +27,9 @@ export default async function Page() {
                     {p.count} session{p.count === 1 ? "" : "s"}
                   </span>
                   <span className="text-muted-foreground">
-                    {p.last.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
+                    {p.last
+                      ? p.last.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })
+                      : "no sessions yet"}
                   </span>
                 </>
               }

@@ -1,0 +1,32 @@
+[project]
+name = "cc-cloud"
+version = "0.1.0"
+description = "Hosted multi-user backend + sync CLI for the CC session explorer"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "sqlalchemy>=2.0.30",
+    "alembic>=1.13",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "email-validator>=2.1",
+    "httpx>=0.27",
+    "psycopg[binary]>=3.2",
+    "commit-context",
+]
+
+[project.scripts]
+cc-cloud = "cc_cloud.sync:main"
+cc-cloud-worker = "cc_cloud.worker:main"
+
+[tool.uv.sources]
+commit-context = { path = "../commit-context", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cc_cloud"]

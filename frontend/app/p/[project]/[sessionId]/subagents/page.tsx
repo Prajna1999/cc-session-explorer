@@ -2,14 +2,14 @@ import { notFound } from "next/navigation"
 import { AppShell, Crumb, CrumbSep } from "@/components/app-shell"
 import { ListContainer, Row, RowTitle, Empty } from "@/components/row-list"
 import { Chip } from "@/components/chip"
-import { listProjects, listSubagents, NotFoundError } from "@/lib/sessions"
+import { listProjects, listSubagents, NotFoundError, withAuth } from "@/lib/sessions"
 
 export default async function Page({ params }: { params: Promise<{ project: string; sessionId: string }> }) {
   const { project, sessionId } = await params
-  const projects = await listProjects()
+  const projects = await withAuth(() => listProjects())
   let agents: Awaited<ReturnType<typeof listSubagents>>
   try {
-    agents = await listSubagents(project, sessionId)
+    agents = await withAuth(() => listSubagents(project, sessionId))
   } catch (e) {
     if (e instanceof NotFoundError) notFound()
     throw e

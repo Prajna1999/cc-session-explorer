@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 
 export function ListContainer({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-foreground/10", className)}>
+    <div className={cn("overflow-hidden rounded-lg border border-border bg-card shadow-xs", className)}>
       {children}
     </div>
   )
@@ -28,8 +28,9 @@ export function Row({
     </>
   )
   const classes = cn(
-    "flex items-center justify-between gap-4 border-b border-border/70 px-4 py-3.5 text-inherit no-underline last:border-b-0",
-    href && "transition-colors duration-200 ease-out hover:bg-accent/40 active:duration-75",
+    "flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border/60 px-4 py-3.5 text-inherit no-underline last:border-b-0",
+    href &&
+      "transition-colors duration-150 ease-out hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring active:bg-accent",
     className
   )
   if (href) {
@@ -46,7 +47,7 @@ export function RowTitle({ children, mono }: { children: ReactNode; mono?: boole
   return (
     <span
       className={cn(
-        "overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-semibold text-foreground",
+        "overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-semibold tracking-tight text-foreground",
         mono && "font-mono text-sm font-medium"
       )}
     >
@@ -56,5 +57,5 @@ export function RowTitle({ children, mono }: { children: ReactNode; mono?: boole
 }
 
 export function Empty({ children }: { children: ReactNode }) {
-  return <div className="p-6 text-center text-muted-foreground">{children}</div>
+  return <div className="px-6 py-12 text-center text-sm text-muted-foreground">{children}</div>
 }

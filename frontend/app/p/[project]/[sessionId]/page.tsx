@@ -2,21 +2,22 @@ import { notFound } from "next/navigation"
 import { AppShell, Crumb, CrumbSep } from "@/components/app-shell"
 import { Chip } from "@/components/chip"
 import { Badge } from "@/components/ui/badge"
+import { Initials } from "@/components/avatar"
 import Link from "next/link"
 import { Transcript } from "@/components/transcript"
-import { listProjects, getSession, NotFoundError } from "@/lib/sessions"
+import { listProjects, getSession, NotFoundError, withAuth } from "@/lib/sessions"
 
 export default async function Page({ params }: { params: Promise<{ project: string; sessionId: string }> }) {
   const { project, sessionId } = await params
-  const projects = await listProjects()
+  const projects = await withAuth(() => listProjects())
   let session: Awaited<ReturnType<typeof getSession>>
   try {
-    session = await getSession(project, sessionId)
+    session = await withAuth(() => getSession(project, sessionId))
   } catch (e) {
     if (e instanceof NotFoundError) notFound()
     throw e
   }
-  const { entries, meta, hasSubagents, hasToolResults } = session
+  const { entries, meta, hasSubagents, hasToolResults, author } = session
   const title = meta.title || sessionId
 
   return (
@@ -54,6 +55,12 @@ export default async function Page({ params }: { params: Promise<{ project: stri
             · {meta.prompts} prompts · {meta.toolCalls} tool calls
           </span>
           {meta.version && <span className="font-mono text-muted-foreground">· v{meta.version}</span>}
+          {author && (
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              · <Initials name={author.name ?? author.email} />
+              {author.name ?? author.email}
+            </span>
+          )}
         </div>
         <div className="mb-1 flex flex-wrap items-center gap-2 text-[13px]">
           <span className="font-mono text-xs text-muted-foreground">

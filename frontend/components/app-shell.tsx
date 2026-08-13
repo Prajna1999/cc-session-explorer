@@ -2,6 +2,7 @@ import Link from "next/link"
 import type { ReactNode } from "react"
 import type { Project } from "@/lib/sessions"
 import { ProjectSwitcher } from "@/components/project-switcher"
+import { LogoutButton } from "@/components/logout-button"
 
 export function AppShell({
   projects,
@@ -16,25 +17,35 @@ export function AppShell({
 }) {
   return (
     <>
-      <header className="sticky top-0 z-10 flex items-center gap-3.5 border-b bg-card px-6 py-3">
-        <Link href="/" className="text-lg text-foreground no-underline transition-opacity duration-200 ease-out hover:opacity-70">
+      <header className="sticky top-0 z-10 flex min-h-[52px] items-center gap-3 border-b border-border bg-card px-4 sm:px-6">
+        <Link
+          href="/"
+          aria-label="Projects"
+          className="font-mono text-lg text-foreground no-underline transition-colors duration-150 ease-out hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        >
           ◆
         </Link>
         <ProjectSwitcher projects={projects} current={currentProject} />
-        <nav className="flex items-center gap-2 text-sm">
+        <nav className="hidden min-w-0 items-center gap-1.5 text-sm sm:flex">
           <span className="text-border">/</span>
           {breadcrumbs}
         </nav>
+        <div className="ml-auto">
+          <LogoutButton />
+        </div>
       </header>
-      <main className="mx-auto max-w-[1180px] px-6 py-6">{children}</main>
+      <main className="mx-auto max-w-[1180px] px-4 py-6 sm:px-6">{children}</main>
     </>
   )
 }
 
 export function Crumb({ href, children, current }: { href?: string; children: ReactNode; current?: boolean }) {
-  if (current) return <span className="font-semibold text-foreground">{children}</span>
+  if (current) return <span className="truncate font-semibold text-foreground">{children}</span>
   return (
-    <Link href={href!} className="text-muted-foreground no-underline transition-colors duration-200 ease-out hover:text-foreground">
+    <Link
+      href={href!}
+      className="text-muted-foreground no-underline transition-colors duration-150 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+    >
       {children}
     </Link>
   )

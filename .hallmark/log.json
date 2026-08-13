@@ -1,0 +1,10 @@
+[
+  {
+    "date": "2026-08-13",
+    "scope": "app",
+    "macrostructure": "Workbench (app family)",
+    "theme": "Cobalt",
+    "enrichment": "none",
+    "brief": "CC Session Explorer cloud UI — multi-page redesign to professional-grade dev tool (auth, sessions, transcript, git, members)"
+  }
+]

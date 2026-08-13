@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { AppShell, Crumb, CrumbSep } from "@/components/app-shell"
 import { Chip } from "@/components/chip"
 import { Transcript } from "@/components/transcript"
-import { listProjects, getSubagent, NotFoundError } from "@/lib/sessions"
+import { listProjects, getSubagent, NotFoundError, withAuth } from "@/lib/sessions"
 
 export default async function Page({
   params,
@@ -11,10 +11,10 @@ export default async function Page({
 }) {
   const { project, sessionId, agentId: rawAgentId } = await params
   const agentId = rawAgentId.replace(/^agent-/, "")
-  const projects = await listProjects()
+  const projects = await withAuth(() => listProjects())
   let subagent: Awaited<ReturnType<typeof getSubagent>>
   try {
-    subagent = await getSubagent(project, sessionId, agentId)
+    subagent = await withAuth(() => getSubagent(project, sessionId, agentId))
   } catch (e) {
     if (e instanceof NotFoundError) notFound()
     throw e
