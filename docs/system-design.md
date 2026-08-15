@@ -39,7 +39,7 @@ central SQL store.
 | Drop-in API contract | Read endpoints keep the same shapes as the local API so the existing Next.js frontend works with minimal changes. |
 | Multi-tenant & secure | Users, teams, role-based access; transcripts are sensitive (source code, commands, possibly secrets). |
 
-### 1.4 Non-goals (v1) hello
+### 1.4 Non-goals (v1) hello v2
 
 - No remote control / live collaboration on running agents.
 - No code execution or CI integration beyond the git webhook.
