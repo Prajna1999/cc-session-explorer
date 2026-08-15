@@ -7,8 +7,21 @@ Install once per machine:
 
     uv tool install --from ./cli commit-context
 
-Install once per repo clone:
+Install once per repo clone (writes `.git/hooks/post-commit`, `post-merge`,
+`post-checkout`, and `pre-push`):
 
     cc-commit-context install
+
+After that, context is captured for **every** commit, no matter how it's made:
+
+- `git commit` run as a Bash tool call inside a Claude Code session → that
+  session's conversation slice, via the `PostToolUse` hook (`capture`).
+- commits from a GUI (VS Code, GitHub Desktop), a plain terminal, or another
+  tool → the repo's most recently active Claude Code session context, via the
+  native `post-commit` hook (`capture-commit`).
+
+Both paths are idempotent and conservative: no session, a stale session, or
+nothing new since the last captured commit means no context is attached.
+`git pull`/`git checkout` materialize context that arrived with new commits.
 
 See the root `CLAUDE.md` for how this fits into cc-session-explorer.

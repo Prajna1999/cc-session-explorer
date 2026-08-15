@@ -16,7 +16,9 @@ context (session logs and per-commit context) for shared git repos.
 - `cli/` attaches the agent conversation behind each `git commit` to the
   commit itself via `refs/notes/claude-context`, so context travels with the repo on
   push/pull. `capture.py` fires as a Claude Code `PostToolUse` hook after in-session
-  `git commit` Bash calls; `materialize.py` writes notes out to
+  `git commit` Bash calls; `capture_commit.py` fires as a native `post-commit` hook
+  for **every** commit (GUI / plain-terminal commits included), attaching the repo's
+  most recently active session; `materialize.py` writes notes out to
   `~/.claude/projects/<slug>/commits/<sha>.json` on every machine after pull/checkout.
 
 ### 1.2 What we are building
@@ -62,7 +64,7 @@ requires an agent-side uploader.
 ```
  ┌────────────────────────────── Dev machines ──────────────────────────────┐
  │                                                                          │
- │  Claude Code session ── PostToolUse hook ──► cc-commit-context capture  │
+ │  git commit (any tool) ── post-commit/PostToolUse hooks ──► capture  │
  │       │                                          │ (git notes)           │
  │       │                                          ▼                      │
  │  ~/.claude/projects/<slug>/*.jsonl      refs/notes/claude-context       │

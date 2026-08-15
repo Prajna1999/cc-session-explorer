@@ -77,22 +77,31 @@ uv tool install --from ./cli commit-context   # once per machine
 cc-commit-context install                      # once per clone
 ```
 
-That writes three git hooks:
+That writes four git hooks:
 
-- **`post-commit` capture (via Claude Code `PostToolUse`)**: after every Bash call
+- **`post-commit` capture (native)**: runs for **every** commit, so commits made
+  from a GUI (VS Code, GitHub Desktop), a plain terminal, or another tool get
+  context too — not just commits run inside Claude Code. It attaches the repo's
+  most recently active Claude Code session
+  (`~/.claude/projects/<project-slug>/`) to any commit that doesn't already have
+  a note, and writes it to `~/.claude/projects/<project-slug>/commits/<sha>.json`.
+- **In-session capture (via Claude Code `PostToolUse`)**: after every Bash call
   in a Claude Code session, the capture hook checks whether the command contained
-  `git commit`. If it did, it slices the session transcript since the last captured
-  commit and stores it as a git note on `refs/notes/claude-context`, and writes it to
-  `~/.claude/projects/<project-slug>/commits/<sha>.json`.
+  `git commit`. If it did, it slices that session's transcript since the last
+  captured commit and stores it as a git note on `refs/notes/claude-context`
+  (plus the same `commits/<sha>.json` materialization). Idempotent with the
+  native hook — a commit never gets two notes.
 - **`post-merge` / `post-checkout` materialize**: when new commits arrive via
   `git pull` / `git checkout`, their notes (if any) are written to the same
-  `commits/<sha>.json` location — so context shows up on every machine, no manual
-  step.
+  `commits/<sha>.json` location — so context shows up on every machine, no
+  manual step.
 - **`pre-push`**: pushes the notes ref alongside your branch.
 
-> Capture fires **only** for `git commit` run as a Bash tool call inside a Claude
-> Code session. Commits from a plain terminal, another tool, or CI get no attached
-> context — by design, since there's no agent conversation behind them.
+> Capture is conservative by design: no Claude Code session for the repo → no
+> context; a stale session that predates the last captured commit → no context;
+> nothing new since the last captured commit → no context. In-session commits
+> get a precise slice of that session; out-of-session commits get the most
+> recently active session's context.
 
 Once notes exist on the remote, teammates see the context with zero agent-side
 software — see [Git-native ingest](#git-native-ingest-m1).

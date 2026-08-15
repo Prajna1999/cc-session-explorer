@@ -27,6 +27,17 @@ git fetch origin '{NOTES_REFSPEC}' >/dev/null 2>&1 || true
 cc-commit-context materialize --range "$1" "$2"
 """
 
+# Native post-commit capture: attaches the repo's most recently active Claude
+# Code session context to ANY commit that doesn't already have a note — so
+# commits made from a GUI or plain terminal get context too, not just commits
+# run as a Bash tool call inside Claude Code. `git notes add` never fires
+# post-commit itself, so there's no recursion to guard against; the `|| true`
+# keeps a missing install or odd repo state from ever failing the commit.
+POST_COMMIT = f"""#!/bin/sh
+{INSTALL_MARKER}
+cc-commit-context capture-commit 2>/dev/null || true
+"""
+
 # Guarded against recursion: this hook's own `git push` of the notes ref would
 # otherwise re-trigger this same pre-push hook.
 PRE_PUSH = f"""#!/bin/sh
@@ -70,6 +81,7 @@ def run(argv=None) -> int:
     hooks_dir.mkdir(parents=True, exist_ok=True)
     messages.append(_write_hook(hooks_dir, "post-merge", POST_MERGE))
     messages.append(_write_hook(hooks_dir, "post-checkout", POST_CHECKOUT))
+    messages.append(_write_hook(hooks_dir, "post-commit", POST_COMMIT))
     messages.append(_write_hook(hooks_dir, "pre-push", PRE_PUSH))
 
     fetch = _run(["git", "fetch", "origin", NOTES_REFSPEC], cwd=root)
@@ -82,3 +94,7 @@ def run(argv=None) -> int:
     for m in messages:
         print(m)
     return 0
+
+
+if __name__ == "__main__":
+    sys.exit(run())

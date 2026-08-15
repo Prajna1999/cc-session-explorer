@@ -70,3 +70,9 @@ def run(argv=None) -> int:
 
     materialize(shas, root)
     return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(run())
