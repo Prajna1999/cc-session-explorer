@@ -1,11 +1,11 @@
 import sys
 
-from . import capture, capture_commit, install, materialize
+from . import capture, capture_commit, dsh, install, materialize
 
 
 def main() -> None:
     if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
-        print("usage: cc-commit-context <capture|capture-commit|materialize|install> [args...]")
+        print("usage: cc-commit-context <capture|capture-commit|dsh-export|materialize|install> [args...]")
         sys.exit(0 if len(sys.argv) >= 2 else 2)
 
     subcommand, rest = sys.argv[1], sys.argv[2:]
@@ -13,6 +13,8 @@ def main() -> None:
         sys.exit(capture.run(rest))
     elif subcommand == "capture-commit":
         sys.exit(capture_commit.run(rest))
+    elif subcommand == "dsh-export":
+        sys.exit(dsh.run(rest))
     elif subcommand == "materialize":
         sys.exit(materialize.run(rest))
     elif subcommand == "install":
