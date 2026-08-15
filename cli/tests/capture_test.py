@@ -152,6 +152,16 @@ def main() -> int:
         note3 = _run(["git", "notes", f"--ref={NOTES_REF}", "show", sha3], repo, env)
         check("stale session skipped (no note)", note3.returncode != 0, note3.stdout[:80])
 
+        # --- 48h staleness window ---------------------------------------------
+        from time import time as _time
+        os.utime(session_file, (int(_time()) - 49 * 3600, int(_time()) - 49 * 3600))
+        (repo / "c2.txt").write_text("too old")
+        _run(["git", "add", "."], repo, env)
+        _run(["git", "commit", "-q", "-m", "window test"], repo, env)
+        sha3b = _run(["git", "rev-parse", "HEAD"], repo, env).stdout.strip()
+        note3b = _run(["git", "notes", f"--ref={NOTES_REF}", "show", sha3b], repo, env)
+        check("session older than 48h skipped (no note)", note3b.returncode != 0, note3b.stdout[:80])
+
         # --- commit with NEW session activity -> attaches --------------------
         os.utime(session_file, None)  # restore mtime to now
         session_file.write_text(session_lines("2026-08-13T11:00"))

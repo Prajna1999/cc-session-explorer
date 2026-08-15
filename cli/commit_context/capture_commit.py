@@ -17,15 +17,20 @@ Heuristics (deliberately conservative — no context is better than wrong contex
   capture, which runs a moment later via PostToolUse and is skipped here);
 - the candidate session is the newest ``*.jsonl`` under
   ``~/.claude/projects/<slug>/`` for this repo;
+- sessions whose last activity is older than ``STALE_WINDOW`` (48h) are ignored
+  — a conversation from days ago is not the context behind today's commit;
 - sessions whose last activity predates the most recent already-captured commit
-  are ignored (stale context);
+  are also ignored (already covered by later context);
 - if the slice since the last captured commit is empty, nothing is attached.
 """
 
 from pathlib import Path
+from time import time
 
 from .capture import build_and_attach, cursor_path, head_sha, last_captured_ts, note_exists
 from .materialize import project_slug, repo_root
+
+STALE_WINDOW = 48 * 3600  # seconds; older sessions are not "the context behind" today's commit
 
 
 def run(argv=None) -> int:
@@ -46,9 +51,13 @@ def run(argv=None) -> int:
     if not sessions:
         return 0
     transcript = sessions[0]
+    session_mtime = int(transcript.stat().st_mtime)
+
+    if time() - session_mtime > STALE_WINDOW:
+        return 0  # session ended too long ago to be the context behind this commit
 
     last_ts = last_captured_ts(root)
-    if last_ts is not None and int(transcript.stat().st_mtime) < last_ts:
+    if last_ts is not None and session_mtime < last_ts:
         return 0  # newest session predates the last captured context — stale
 
     session_id = transcript.stem

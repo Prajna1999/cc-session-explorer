@@ -20,8 +20,9 @@ After that, context is captured for **every** commit, no matter how it's made:
   tool → the repo's most recently active Claude Code session context, via the
   native `post-commit` hook (`capture-commit`).
 
-Both paths are idempotent and conservative: no session, a stale session, or
-nothing new since the last captured commit means no context is attached.
+Both paths are idempotent and conservative: no session, a stale session (older
+than 48h, or one that predates the last captured commit), or nothing new since
+the last captured commit means no context is attached.
 `git pull`/`git checkout` materialize context that arrived with new commits.
 
 See the root `CLAUDE.md` for how this fits into cc-session-explorer.

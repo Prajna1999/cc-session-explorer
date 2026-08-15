@@ -98,10 +98,10 @@ That writes four git hooks:
 - **`pre-push`**: pushes the notes ref alongside your branch.
 
 > Capture is conservative by design: no Claude Code session for the repo → no
-> context; a stale session that predates the last captured commit → no context;
-> nothing new since the last captured commit → no context. In-session commits
-> get a precise slice of that session; out-of-session commits get the most
-> recently active session's context.
+> context; a session older than 48h, or one that predates the last captured
+> commit → no context; nothing new since the last captured commit → no context.
+> In-session commits get a precise slice of that session; out-of-session commits
+> get the most recently active session's context.
 
 Once notes exist on the remote, teammates see the context with zero agent-side
 software — see [Git-native ingest](#git-native-ingest-m1).
