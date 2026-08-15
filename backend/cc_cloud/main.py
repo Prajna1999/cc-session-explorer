@@ -389,7 +389,7 @@ def commit_context(slug: str, sha: str, db: Session = Depends(get_db), user: Use
     project = require_project(db, slug, user)
     commit = (
         db.query(Commit)
-        .filter(Commit.project_id == project.id, Commit.sha == sha)
+        .filter(Commit.project_id == project.id, Commit.sha.like(f"{sha}%"))
         .first()
     )
     if commit is None or commit.context is None:

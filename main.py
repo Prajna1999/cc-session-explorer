@@ -151,7 +151,7 @@ def project_view(project: str):
 def git_history(project: str):
     project_dir = safe_path(project)
     cwd = project_cwd(project_dir)
-    out = run_git(cwd, "log", "--all", "--date=format:%d %b %Y %H:%M",
+    out = run_git(cwd, "log", "--branches", "--tags", "--date=format:%d %b %Y %H:%M",
                   "--format=%H%x1f%D%x1f%an%x1f%ad%x1f%s", "-n", "300")
     commits = []
     for line in out.splitlines():
@@ -167,8 +167,13 @@ def git_history(project: str):
 
 @app.get("/api/projects/{project}/commits/{sha}")
 def commit_context(project: str, sha: str):
-    path = safe_path(project, "commits", f"{sha}.json")
-    return json.loads(path.read_text())
+    # Accept full or short shas (prefix match), like `git show <sha>`.
+    project_dir = safe_path(project)
+    commits_dir = project_dir / "commits"
+    candidates = sorted(commits_dir.glob(f"{sha}*.json")) if commits_dir.is_dir() else []
+    if not candidates:
+        raise HTTPException(status_code=404, detail="no context for this commit")
+    return json.loads(candidates[0].read_text())
 
 
 @app.get("/api/projects/{project}/sessions/{session_id}")
