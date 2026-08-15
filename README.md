@@ -103,6 +103,11 @@ That writes four git hooks:
 > In-session commits get a precise slice of that session; out-of-session commits
 > get the most recently active session's context.
 
+**DeepSeek Harness sessions too:** the explorer reads `~/.claude/projects`, which
+is Claude Code's tree. If you also work in the DeepSeek Harness (`~/.dsh/sessions`,
+zstd JSONL), run `cc-commit-context dsh-export` to convert its sessions into the
+same tree — they then appear in the explorer and upload via `cc-cloud sync`.
+
 Once notes exist on the remote, teammates see the context with zero agent-side
 software — see [Git-native ingest](#git-native-ingest-m1).
 

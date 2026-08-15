@@ -25,4 +25,13 @@ than 48h, or one that predates the last captured commit), or nothing new since
 the last captured commit means no context is attached.
 `git pull`/`git checkout` materialize context that arrived with new commits.
 
+DeepSeek Harness sessions (zstd JSONL under `~/.dsh/sessions/`) can be viewed
+in the same explorer by converting them into its tree:
+
+    cc-commit-context dsh-export
+
+This writes `~/.claude/projects/<slug>/<session-id>.jsonl` in the Claude Code
+format the explorer (and `cc-cloud sync --sessions`) already reads; re-run it
+after any DSH session finishes.
+
 See the root `CLAUDE.md` for how this fits into cc-session-explorer.
